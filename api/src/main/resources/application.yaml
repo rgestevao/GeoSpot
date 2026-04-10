@@ -1,6 +1,24 @@
 spring:
   application:
     name: api
+
+  datasource:
+    url: jdbc:postgresql://localhost:5433/${DB_NAME:geospotdb}
+    username: ${DB_USER:usrgeospot}
+    password: ${DB_PASSWORD:pwdgeospot}
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
 jwt:
   secret: ${JWT_SECRET:7IRKF6Rh1kGSAfKt5jEBOmJ+AKWxYJVm4uLuxobk7Bk=}
-  expiration: 360000
+  expiration: 3600000

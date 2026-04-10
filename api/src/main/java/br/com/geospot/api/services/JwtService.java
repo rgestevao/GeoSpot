@@ -4,7 +4,6 @@ import br.com.geospot.api.db.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -13,16 +12,16 @@ import java.util.Date;
 import java.util.function.Function;
 
 @Service
-@RequiredArgsConstructor
 public class JwtService {
-
-    @Value("${jwt.secret}")
-    private String secret;
 
     @Value("${jwt.expiration}")
     private long expiration;
 
-    private final SecretKey key = Keys.hmacShaKeyFor(secret.getBytes());
+    private final SecretKey key;
+
+    public JwtService(@Value("${jwt.secret}") String secret) {
+        this.key = Keys.hmacShaKeyFor(secret.getBytes());
+    }
 
     public String generateToken(User user) {
         return Jwts.builder()
