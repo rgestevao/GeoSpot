@@ -2,6 +2,7 @@ package br.com.geospot.api.services;
 
 import br.com.geospot.api.db.User;
 import br.com.geospot.api.db.UserRepository;
+import br.com.geospot.api.exceptions.FlowException;
 import br.com.geospot.api.models.LoginRequest;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -41,5 +42,26 @@ class AuthServiceTest {
         var result = authService.login(request);
         Assertions.assertThat(result).isNotNull();
         Assertions.assertThat(result.token()).isEqualTo("fake-token");
+    }
+
+    @Test
+    void shouldThrowExceptionWhenUserNotFound() {
+        var request = new LoginRequest("notfound@test.com", "123");
+        Mockito.when(userRepository.findByEmail(request.email())).thenReturn(Optional.empty());
+        Assertions.assertThatThrownBy(() -> authService.login(request))
+                .isInstanceOf(FlowException.class)
+                .hasMessage("Invalid email or password");
+    }
+
+    @Test
+    void shouldThrowExceptionWhenPasswordIsInvalid() {
+        var email = "user@test.com";
+        var request = new LoginRequest(email, "wrong");
+        var user = new User(email, "encoded");
+        Mockito.when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+        Mockito.when(passwordEncoder.matches("wrong", "encoded")).thenReturn(false);
+        Assertions.assertThatThrownBy(() -> authService.login(request))
+                .isInstanceOf(FlowException.class)
+                .hasMessage("Invalid credentials");
     }
 }
