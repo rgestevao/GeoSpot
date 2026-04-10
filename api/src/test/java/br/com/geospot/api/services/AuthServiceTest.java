@@ -2,7 +2,6 @@ package br.com.geospot.api.services;
 
 import br.com.geospot.api.db.User;
 import br.com.geospot.api.db.UserRepository;
-import br.com.geospot.api.mappers.UserMapper;
 import br.com.geospot.api.models.LoginRequest;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -25,7 +24,7 @@ class AuthServiceTest {
     private PasswordEncoder passwordEncoder;
 
     @Mock
-    private UserMapper userMapper;
+    private JwtService jwtService;
 
     @InjectMocks
     private AuthService authService;
@@ -34,13 +33,13 @@ class AuthServiceTest {
     void shouldLoginSuccessfullyWithValidCredentials() {
         var email = "user@test.com";
         var password = "U$3rT3sT";
-        var request = new LoginRequest(email, "U$3rT3sT");
-        var user = new User(email, password);
-        Mockito.when(userMapper.toUser(request)).thenReturn(user);
+        var request = new LoginRequest(email, password);
+        var user = new User(email, "encodedPassword");
         Mockito.when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
-        Mockito.when(passwordEncoder.matches(password, "U$3rT3sT"))
-                .thenReturn(true);
+        Mockito.when(passwordEncoder.matches(password, "encodedPassword")).thenReturn(true);
+        Mockito.when(jwtService.generateToken(user)).thenReturn("fake-token");
         var result = authService.login(request);
         Assertions.assertThat(result).isNotNull();
+        Assertions.assertThat(result.token()).isEqualTo("fake-token");
     }
 }

@@ -1,3 +1,6 @@
 spring:
   application:
     name: api
+jwt:
+  secret: ${JWT_SECRET:7IRKF6Rh1kGSAfKt5jEBOmJ+AKWxYJVm4uLuxobk7Bk=}
+  expiration: 360000

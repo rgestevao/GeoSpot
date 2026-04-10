@@ -1,7 +1,7 @@
 package br.com.geospot.api.services;
 
 import br.com.geospot.api.db.UserRepository;
-import br.com.geospot.api.mappers.UserMapper;
+import br.com.geospot.api.exceptions.FlowException;
 import br.com.geospot.api.models.LoginRequest;
 import br.com.geospot.api.models.LoginResponse;
 import lombok.RequiredArgsConstructor;
@@ -13,20 +13,23 @@ import org.springframework.stereotype.Service;
 public class AuthService {
 
     private final UserRepository userRepository;
-    private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
     public LoginResponse login(LoginRequest request) {
-        var user = userMapper.toUser(request);
-        var userOptional = userRepository.findByEmail(user.getEmail());
+        var userOptional = userRepository.findByEmail(request.email());
         if (userOptional.isEmpty()) {
-            return null;
+            throw new FlowException("User not found");
         }
-        var isMatched = passwordEncoder.matches(request.password(), user.getPassword());
+        var user = userOptional.get();
+        var isMatched = passwordEncoder.matches(
+                request.password(),
+                user.getPassword()
+        );
         if (!isMatched) {
-            return null;
+            throw new FlowException("Invalid credentials");
         }
-        var response = userOptional.get();
-        return new LoginResponse(response.getEmail(), "");
+        var token = jwtService.generateToken(user);
+        return new LoginResponse(user.getEmail(), token);
     }
 }
