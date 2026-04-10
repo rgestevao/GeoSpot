@@ -1,6 +1,7 @@
 package br.com.geospot.api.services;
 
 import br.com.geospot.api.db.UserRepository;
+import br.com.geospot.api.exceptions.ErrorCodeEnum;
 import br.com.geospot.api.exceptions.FlowException;
 import br.com.geospot.api.models.LoginRequest;
 import br.com.geospot.api.models.LoginResponse;
@@ -19,7 +20,7 @@ public class AuthService {
     public LoginResponse login(LoginRequest request) {
         var userOptional = userRepository.findByEmail(request.email());
         if (userOptional.isEmpty()) {
-            throw new FlowException("User not found");
+            throw new FlowException(ErrorCodeEnum.BAD_REQUEST, "Invalid email or password");
         }
         var user = userOptional.get();
         var isMatched = passwordEncoder.matches(
@@ -27,7 +28,7 @@ public class AuthService {
                 user.getPassword()
         );
         if (!isMatched) {
-            throw new FlowException("Invalid credentials");
+            throw new FlowException(ErrorCodeEnum.BAD_REQUEST, "Invalid credentials");
         }
         var token = jwtService.generateToken(user);
         return new LoginResponse(user.getEmail(), token);
