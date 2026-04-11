@@ -22,3 +22,14 @@ spring:
 jwt:
   secret: ${JWT_SECRET:7IRKF6Rh1kGSAfKt5jEBOmJ+AKWxYJVm4uLuxobk7Bk=}
   expiration: 3600000
+
+springdoc:
+  api-docs:
+    path: /docs
+  swagger-ui:
+    path: /swagger
+
+server:
+  port: 8080
+  servlet:
+    context-path: /geospot/api
