@@ -2,6 +2,7 @@ package br.com.geospot.api.services;
 
 import br.com.geospot.api.db.User;
 import br.com.geospot.api.db.UserRepository;
+import br.com.geospot.api.db.UserStatusEnum;
 import br.com.geospot.api.exceptions.FlowException;
 import br.com.geospot.api.mappers.UserMapper;
 import br.com.geospot.api.models.CreateUserRequest;
@@ -16,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
@@ -41,7 +43,7 @@ class UserServiceTest {
         var email = "user@test.com";
         var password = "U$3rT3sT";
         var request = new CreateUserRequest(name, email, password);
-        var user = new User(name, email, "encoded-password");
+        var user = new User(name, email, "encoded-password", UserStatusEnum.ACTIVE);
         Mockito.when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
         Mockito.when(passwordEncoder.encode(ArgumentMatchers.anyString())).thenReturn("encoded-password");
         Mockito.when(userMapper.fromCreateUserRequest(request)).thenReturn(user);
@@ -72,7 +74,7 @@ class UserServiceTest {
     @Test
     void shouldEncodePasswordBeforeSaving() {
         var request = new CreateUserRequest("User", "user@test.com", "123");
-        var user = new User("User", "user@test.com", "123");
+        var user = new User("User", "user@test.com", "123", UserStatusEnum.ACTIVE);
         Mockito.when(userRepository.findByEmail(request.email())).thenReturn(Optional.empty());
         Mockito.when(userMapper.fromCreateUserRequest(Mockito.any())).thenReturn(user);
         Mockito.when(passwordEncoder.encode("123")).thenReturn("encoded-password");
@@ -86,7 +88,7 @@ class UserServiceTest {
     @Test
     void shouldGenerateTokens() {
         var request = new CreateUserRequest("User", "user@test.com", "123");
-        var user = new User("User", "user@test.com", "encoded");
+        var user = new User("User", "user@test.com", "encoded", UserStatusEnum.ACTIVE);
         Mockito.when(userRepository.findByEmail(request.email())).thenReturn(Optional.empty());
         Mockito.when(userMapper.fromCreateUserRequest(Mockito.any())).thenReturn(user);
         Mockito.when(passwordEncoder.encode(Mockito.any())).thenReturn("encoded");
@@ -96,5 +98,18 @@ class UserServiceTest {
         var result = userService.create(request);
         Assertions.assertThat(result.accessToken()).isEqualTo("access");
         Assertions.assertThat(result.refreshToken()).isEqualTo("refresh");
+    }
+
+    @Test
+    void shouldSoftDeleteUserSuccessfully() {
+        var userId = UUID.randomUUID();
+        var name = "User Test";
+        var email = "user@test.com";
+        var user = new User(name, email, "encoded-password", UserStatusEnum.ACTIVE);
+        Mockito.when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        Mockito.when(userRepository.save(Mockito.any())).thenReturn(user);
+        var result = userService.deleteUser(userId);
+        Assertions.assertThat(result).isNotNull();
+        Assertions.assertThat(result.status()).isEqualTo(UserStatusEnum.INACTIVE);
     }
 }
