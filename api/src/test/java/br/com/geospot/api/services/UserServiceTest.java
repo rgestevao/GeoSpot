@@ -2,6 +2,7 @@ package br.com.geospot.api.services;
 
 import br.com.geospot.api.db.User;
 import br.com.geospot.api.db.UserRepository;
+import br.com.geospot.api.exceptions.FlowException;
 import br.com.geospot.api.mappers.UserMapper;
 import br.com.geospot.api.models.CreateUserRequest;
 import org.assertj.core.api.Assertions;
@@ -56,5 +57,44 @@ class UserServiceTest {
         Mockito.verify(userRepository).findByEmail(email);
         Mockito.verify(userRepository).save(Mockito.any(User.class));
         Mockito.verify(jwtService).generateToken(Mockito.any(User.class));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenEmailAlreadyExists() {
+        var request = new CreateUserRequest("User", "user@test.com", "123");
+        Mockito.when(userRepository.findByEmail(request.email())).thenReturn(Optional.of(new User()));
+        Assertions.assertThatThrownBy(() -> userService.create(request))
+                .isInstanceOf(FlowException.class)
+                .hasMessage("E-mail already exists");
+        Mockito.verify(userRepository, Mockito.never()).save(Mockito.any());
+    }
+
+    @Test
+    void shouldEncodePasswordBeforeSaving() {
+        var request = new CreateUserRequest("User", "user@test.com", "123");
+        var user = new User("User", "user@test.com", "123");
+        Mockito.when(userRepository.findByEmail(request.email())).thenReturn(Optional.empty());
+        Mockito.when(userMapper.fromCreateUserRequest(Mockito.any())).thenReturn(user);
+        Mockito.when(passwordEncoder.encode("123")).thenReturn("encoded-password");
+        Mockito.when(userRepository.save(Mockito.any())).thenReturn(user);
+        Mockito.when(jwtService.generateToken(Mockito.any())).thenReturn("token");
+        Mockito.when(jwtService.generateRefreshToken(Mockito.any())).thenReturn("refresh");
+        userService.create(request);
+        Assertions.assertThat(user.getPassword()).isEqualTo("encoded-password");
+    }
+
+    @Test
+    void shouldGenerateTokens() {
+        var request = new CreateUserRequest("User", "user@test.com", "123");
+        var user = new User("User", "user@test.com", "encoded");
+        Mockito.when(userRepository.findByEmail(request.email())).thenReturn(Optional.empty());
+        Mockito.when(userMapper.fromCreateUserRequest(Mockito.any())).thenReturn(user);
+        Mockito.when(passwordEncoder.encode(Mockito.any())).thenReturn("encoded");
+        Mockito.when(userRepository.save(Mockito.any())).thenReturn(user);
+        Mockito.when(jwtService.generateToken(Mockito.any())).thenReturn("access");
+        Mockito.when(jwtService.generateRefreshToken(Mockito.any())).thenReturn("refresh");
+        var result = userService.create(request);
+        Assertions.assertThat(result.accessToken()).isEqualTo("access");
+        Assertions.assertThat(result.refreshToken()).isEqualTo("refresh");
     }
 }
