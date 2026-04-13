@@ -1,11 +1,11 @@
 package br.com.geospot.api.mappers;
 
 import br.com.geospot.api.db.User;
-import br.com.geospot.api.models.LoginRequest;
+import br.com.geospot.api.models.CreateUserRequest;
 import org.mapstruct.Mapper;
 
-@Mapper
+@Mapper(componentModel = "spring")
 public interface UserMapper {
 
-    User toUser(LoginRequest loginRequest);
+    User fromCreateUserRequest(CreateUserRequest createUserRequest);
 }
