@@ -7,6 +7,9 @@ public record LoginResponse(
         String email,
 
         @NotNull
-        String token
+        String accessToken,
+
+        @NotNull
+        String refreshToken
 ) {
 }

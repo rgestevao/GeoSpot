@@ -1,6 +1,10 @@
 package br.com.geospot.api.services;
 
 import br.com.geospot.api.db.User;
+import br.com.geospot.api.db.UserRepository;
+import br.com.geospot.api.exceptions.ErrorCodeEnum;
+import br.com.geospot.api.exceptions.FlowException;
+import br.com.geospot.api.models.LoginResponse;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -17,10 +21,18 @@ public class JwtService {
     @Value("${jwt.expiration}")
     private long expiration;
 
-    private final SecretKey key;
+    @Value("${jwt.refresh-expiration}")
+    private long refreshExpiration;
 
-    public JwtService(@Value("${jwt.secret}") String secret) {
+    private final SecretKey key;
+    private final UserRepository userRepository;
+
+    public JwtService(
+            @Value("${jwt.secret}") String secret,
+            UserRepository userRepository
+    ) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes());
+        this.userRepository = userRepository;
     }
 
     public String generateToken(User user) {
@@ -59,5 +71,27 @@ public class JwtService {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+    }
+
+    public String generateRefreshToken(User user) {
+        return Jwts.builder()
+                .subject(user.getEmail())
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + refreshExpiration))
+                .signWith(key)
+                .compact();
+    }
+
+    public LoginResponse extractRefreshToken(String refreshToken) {
+        if (!isTokenValid(refreshToken)) {
+            throw new FlowException(
+                    ErrorCodeEnum.BAD_REQUEST,
+                    "Invalid token"
+            );
+        }
+        String email = extractEmail(refreshToken);
+        var user = userRepository.findByEmail(email).orElseThrow();
+        String newAccessToken = generateToken(user);
+        return new LoginResponse(email, newAccessToken, refreshToken);
     }
 }

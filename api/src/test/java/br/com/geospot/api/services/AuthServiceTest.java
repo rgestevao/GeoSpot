@@ -41,7 +41,7 @@ class AuthServiceTest {
         Mockito.when(jwtService.generateToken(user)).thenReturn("fake-token");
         var result = authService.login(request);
         Assertions.assertThat(result).isNotNull();
-        Assertions.assertThat(result.token()).isEqualTo("fake-token");
+        Assertions.assertThat(result.accessToken()).isEqualTo("fake-token");
     }
 
     @Test

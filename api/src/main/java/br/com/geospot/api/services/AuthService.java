@@ -30,7 +30,8 @@ public class AuthService {
         if (!isMatched) {
             throw new FlowException(ErrorCodeEnum.BAD_REQUEST, "Invalid credentials");
         }
-        var token = jwtService.generateToken(user);
-        return new LoginResponse(user.getEmail(), token);
+        var accessToken = jwtService.generateToken(user);
+        var refreshToken = jwtService.generateRefreshToken(user);
+        return new LoginResponse(user.getEmail(), accessToken, refreshToken);
     }
 }

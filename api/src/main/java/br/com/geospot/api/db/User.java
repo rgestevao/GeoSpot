@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -18,6 +19,7 @@ import java.util.UUID;
 @Data
 @Entity
 @Table(name = "users")
+@NoArgsConstructor
 public class User implements UserDetails {
 
     @Id
