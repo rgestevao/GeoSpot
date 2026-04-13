@@ -6,6 +6,7 @@ import br.com.geospot.api.db.UserStatusEnum;
 import br.com.geospot.api.exceptions.FlowException;
 import br.com.geospot.api.mappers.UserMapper;
 import br.com.geospot.api.models.CreateUserRequest;
+import br.com.geospot.api.models.UpdatePasswordRequest;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -128,14 +129,40 @@ class UserServiceTest {
         var name = "User Test";
         var email = "user@test.com";
         var password = "U$3rT3sT";
-        var user = new User(userId, name, email, "encoded-password", UserStatusEnum.ACTIVE);
+        var request = new UpdatePasswordRequest(password);
+        var user = new User(userId, name, email, "old-password", UserStatusEnum.ACTIVE);
         Mockito.when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        Mockito.when(passwordEncoder.encode(password)).thenReturn("new-encoded-password");
         Mockito.when(userRepository.save(Mockito.any())).thenReturn(user);
-        Mockito.when(passwordEncoder.encode(ArgumentMatchers.anyString())).thenReturn("new-encoded-password");
-        var result = userService.updatePassword(userId, password);
+        var result = userService.updatePassword(userId, request);
         Assertions.assertThat(result).isNotNull();
         Assertions.assertThat(result.name()).isEqualTo(name);
         Assertions.assertThat(result.email()).isEqualTo(email);
+        Assertions.assertThat(user.getPassword()).isEqualTo("new-encoded-password");
+        Mockito.verify(passwordEncoder).encode(password);
         Mockito.verify(userRepository).save(Mockito.any(User.class));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenUserNotFound() {
+        var userId = UUID.randomUUID();
+        var request = new UpdatePasswordRequest("123");
+        Mockito.when(userRepository.findById(userId)).thenReturn(Optional.empty());
+        Assertions.assertThatThrownBy(() -> userService.updatePassword(userId, request))
+                .isInstanceOf(FlowException.class)
+                .hasMessage("User not found");
+        Mockito.verify(userRepository, Mockito.never()).save(Mockito.any());
+    }
+
+    @Test
+    void shouldCallPasswordEncoder() {
+        var userId = UUID.randomUUID();
+        var request = new UpdatePasswordRequest("new-password");
+        var user = new User(userId, "User", "user@test.com", "old", UserStatusEnum.ACTIVE);
+        Mockito.when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        Mockito.when(passwordEncoder.encode(Mockito.any())).thenReturn("encoded");
+        Mockito.when(userRepository.save(Mockito.any())).thenReturn(user);
+        userService.updatePassword(userId, request);
+        Mockito.verify(passwordEncoder).encode("new-password");
     }
 }
