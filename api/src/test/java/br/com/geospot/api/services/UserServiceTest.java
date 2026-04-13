@@ -112,4 +112,14 @@ class UserServiceTest {
         Assertions.assertThat(result).isNotNull();
         Assertions.assertThat(result.status()).isEqualTo(UserStatusEnum.INACTIVE);
     }
+
+    @Test
+    void shouldThrowExceptionWhenDeleteUserNotFound() {
+        var userId = UUID.randomUUID();
+        Assertions.assertThatThrownBy(() -> userService.deleteUser(userId))
+                .isInstanceOf(FlowException.class)
+                .hasMessage("User not found");
+        Mockito.verify(userRepository, Mockito.never()).save(Mockito.any());
+    }
+
 }
