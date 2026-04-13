@@ -8,6 +8,7 @@ import br.com.geospot.api.mappers.UserMapper;
 import br.com.geospot.api.models.CreateUserRequest;
 import br.com.geospot.api.models.CreateUserResponse;
 import br.com.geospot.api.models.DeleteUserResponse;
+import br.com.geospot.api.models.UpdatePasswordResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -46,5 +47,15 @@ public class UserService {
         user.setStatus(UserStatusEnum.INACTIVE);
         var deletedUser = userRepository.save(user);
         return new DeleteUserResponse(deletedUser.getName(), deletedUser.getEmail(), deletedUser.getStatus());
+    }
+
+    public UpdatePasswordResponse updatePassword(UUID userId, String newPassword) {
+        var user = userRepository.findById(userId).orElseThrow(
+                () -> new FlowException(ErrorCodeEnum.BAD_REQUEST, "User not found")
+        );
+        user.setUserId(userId);
+        user.setPassword(passwordEncoder.encode(newPassword));
+        var response = userRepository.save(user);
+        return new UpdatePasswordResponse(response.getName(), response.getEmail());
     }
 }

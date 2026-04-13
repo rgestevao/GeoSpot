@@ -122,4 +122,20 @@ class UserServiceTest {
         Mockito.verify(userRepository, Mockito.never()).save(Mockito.any());
     }
 
+    @Test
+    void shouldUpdatePasswordSuccessfully() {
+        var userId = UUID.randomUUID();
+        var name = "User Test";
+        var email = "user@test.com";
+        var password = "U$3rT3sT";
+        var user = new User(userId, name, email, "encoded-password", UserStatusEnum.ACTIVE);
+        Mockito.when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        Mockito.when(userRepository.save(Mockito.any())).thenReturn(user);
+        Mockito.when(passwordEncoder.encode(ArgumentMatchers.anyString())).thenReturn("new-encoded-password");
+        var result = userService.updatePassword(userId, password);
+        Assertions.assertThat(result).isNotNull();
+        Assertions.assertThat(result.name()).isEqualTo(name);
+        Assertions.assertThat(result.email()).isEqualTo(email);
+        Mockito.verify(userRepository).save(Mockito.any(User.class));
+    }
 }
