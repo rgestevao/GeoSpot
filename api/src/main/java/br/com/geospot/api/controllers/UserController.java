@@ -5,6 +5,8 @@ import br.com.geospot.api.models.CreateUserResponse;
 import br.com.geospot.api.models.DeleteUserResponse;
 import br.com.geospot.api.models.UpdatePasswordRequest;
 import br.com.geospot.api.models.UpdatePasswordResponse;
+import br.com.geospot.api.models.UpdateUserRequest;
+import br.com.geospot.api.models.UpdateUserResponse;
 import br.com.geospot.api.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -31,22 +33,31 @@ public class UserController {
 
     @PostMapping
     @Operation(summary = "User registration flow")
-    public ResponseEntity<CreateUserResponse> login(@RequestBody CreateUserRequest loginRequest) {
+    public ResponseEntity<CreateUserResponse> create(@RequestBody CreateUserRequest loginRequest) {
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.create(loginRequest));
     }
 
     @DeleteMapping("/{userId}")
     @Operation(summary = "User delete flow")
-    public ResponseEntity<DeleteUserResponse> login(@PathVariable UUID userId) {
+    public ResponseEntity<DeleteUserResponse> delete(@PathVariable UUID userId) {
         return ResponseEntity.ok(userService.deleteUser(userId));
     }
 
     @PutMapping("/reset-password/{userId}")
-    @Operation(summary = "User update flow")
-    public ResponseEntity<UpdatePasswordResponse> login(
+    @Operation(summary = "User update password flow")
+    public ResponseEntity<UpdatePasswordResponse> updatePassword(
             @PathVariable UUID userId,
             @RequestBody UpdatePasswordRequest updatePasswordRequest
     ) {
         return ResponseEntity.ok(userService.updatePassword(userId, updatePasswordRequest));
+    }
+
+    @PutMapping("/{userId}")
+    @Operation(summary = "User update flow")
+    public ResponseEntity<UpdateUserResponse> update(
+            @PathVariable UUID userId,
+            @RequestBody UpdateUserRequest updateUserRequest
+    ) {
+        return ResponseEntity.ok(userService.update(userId, updateUserRequest));
     }
 }
