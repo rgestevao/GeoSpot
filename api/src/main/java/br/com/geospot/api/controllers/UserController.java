@@ -41,7 +41,7 @@ public class UserController {
         return ResponseEntity.ok(userService.deleteUser(userId));
     }
 
-    @PutMapping("/{userId}")
+    @PutMapping("/reset-password/{userId}")
     @Operation(summary = "User update flow")
     public ResponseEntity<UpdatePasswordResponse> login(
             @PathVariable UUID userId,
