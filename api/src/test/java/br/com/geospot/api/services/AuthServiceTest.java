@@ -2,6 +2,7 @@ package br.com.geospot.api.services;
 
 import br.com.geospot.api.db.User;
 import br.com.geospot.api.db.UserRepository;
+import br.com.geospot.api.db.UserStatusEnum;
 import br.com.geospot.api.exceptions.FlowException;
 import br.com.geospot.api.models.LoginRequest;
 import org.assertj.core.api.Assertions;
@@ -35,7 +36,7 @@ class AuthServiceTest {
         var email = "user@test.com";
         var password = "U$3rT3sT";
         var request = new LoginRequest(email, password);
-        var user = new User(email, "encodedPassword");
+        var user = new User("User Test", email, "encodedPassword", UserStatusEnum.ACTIVE);
         Mockito.when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
         Mockito.when(passwordEncoder.matches(password, "encodedPassword")).thenReturn(true);
         Mockito.when(jwtService.generateToken(user)).thenReturn("fake-token");
@@ -57,11 +58,22 @@ class AuthServiceTest {
     void shouldThrowExceptionWhenPasswordIsInvalid() {
         var email = "user@test.com";
         var request = new LoginRequest(email, "wrong");
-        var user = new User(email, "encoded");
+        var user = new User("User Test", email, "encodedPassword", UserStatusEnum.ACTIVE);
         Mockito.when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
-        Mockito.when(passwordEncoder.matches("wrong", "encoded")).thenReturn(false);
+        Mockito.when(passwordEncoder.matches("wrong", "encodedPassword")).thenReturn(false);
         Assertions.assertThatThrownBy(() -> authService.login(request))
                 .isInstanceOf(FlowException.class)
                 .hasMessage("Invalid credentials");
+    }
+
+    @Test
+    void shouldThrowExceptionWhenUserIsInactive() {
+        var email = "user@test.com";
+        var request = new LoginRequest(email, "encodedPassword");
+        var user = new User("User Test", email, "encodedPassword", UserStatusEnum.INACTIVE);
+        Mockito.when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+        Assertions.assertThatThrownBy(() -> authService.login(request))
+                .isInstanceOf(FlowException.class)
+                .hasMessage("User is not active");
     }
 }

@@ -56,6 +56,7 @@ public class UserService {
         );
         user.setUserId(userId);
         user.setPassword(passwordEncoder.encode(request.password()));
+        user.setStatus(UserStatusEnum.ACTIVE);
         var response = userRepository.save(user);
         return new UpdatePasswordResponse(response.getName(), response.getEmail());
     }

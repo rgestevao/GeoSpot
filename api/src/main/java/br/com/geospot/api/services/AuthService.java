@@ -1,6 +1,7 @@
 package br.com.geospot.api.services;
 
 import br.com.geospot.api.db.UserRepository;
+import br.com.geospot.api.db.UserStatusEnum;
 import br.com.geospot.api.exceptions.ErrorCodeEnum;
 import br.com.geospot.api.exceptions.FlowException;
 import br.com.geospot.api.models.LoginRequest;
@@ -21,6 +22,9 @@ public class AuthService {
         var userOptional = userRepository.findByEmail(request.email());
         if (userOptional.isEmpty()) {
             throw new FlowException(ErrorCodeEnum.BAD_REQUEST, "Invalid email or password");
+        }
+        if (userOptional.get().getStatus() == UserStatusEnum.INACTIVE) {
+            throw new FlowException(ErrorCodeEnum.BAD_REQUEST, "User is not active");
         }
         var user = userOptional.get();
         var isMatched = passwordEncoder.matches(

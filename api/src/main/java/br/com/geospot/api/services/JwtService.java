@@ -2,6 +2,7 @@ package br.com.geospot.api.services;
 
 import br.com.geospot.api.db.User;
 import br.com.geospot.api.db.UserRepository;
+import br.com.geospot.api.db.UserStatusEnum;
 import br.com.geospot.api.exceptions.ErrorCodeEnum;
 import br.com.geospot.api.exceptions.FlowException;
 import br.com.geospot.api.models.LoginResponse;
@@ -90,7 +91,11 @@ public class JwtService {
             );
         }
         String email = extractEmail(refreshToken);
-        var user = userRepository.findByEmail(email).orElseThrow();
+        var user = userRepository.findByEmail(email).orElseThrow(
+                () -> new FlowException(ErrorCodeEnum.BAD_REQUEST, "User not found"));
+        if (user.getStatus() == UserStatusEnum.INACTIVE) {
+            throw new FlowException(ErrorCodeEnum.BAD_REQUEST, "User is not active");
+        }
         String newAccessToken = generateToken(user);
         return new LoginResponse(email, newAccessToken, refreshToken);
     }
