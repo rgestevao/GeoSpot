@@ -34,3 +34,6 @@ server:
   port: 8080
   servlet:
     context-path: /geospot/api
+
+geoapify:
+  api-key: ${GEOAPIFY_API_KEY:d1be425fcf044191b4d1354bb1fc6059}
